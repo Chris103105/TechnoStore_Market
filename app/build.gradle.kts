@@ -7,21 +7,16 @@ plugins {
 
 android {
     namespace = "edu.udb.technostore_market"
-    compileSdk {
-        version = release(36) {
-            minorApiLevel = 1
-        }
-    }
+    compileSdk = 37 // <-- CAMBIADO A 37
 
     defaultConfig {
         applicationId = "edu.udb.technostore_market"
         minSdk = 29
-        targetSdk = 36
+        targetSdk = 37
         versionCode = 1
         versionName = "1.0"
 
-        testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
-    }
+        testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"    }
 
     buildTypes {
         release {
@@ -67,7 +62,8 @@ dependencies {
     implementation("io.coil-kt:coil-compose:2.6.0")
 
     // Firebase (Importando el BoM para controlar las versiones automáticamente)
-    implementation(platform("com.google.firebase:firebase-bom:35.0.2"))
+    implementation(platform("com.google.firebase:firebase-bom:32.8.0"))
     implementation("com.google.firebase:firebase-auth")
     implementation("com.google.firebase:firebase-firestore")
+    implementation("com.google.android.gms:play-services-auth:21.0.0")
 }

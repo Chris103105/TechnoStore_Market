@@ -8,10 +8,10 @@
             <InsightsFilterSettings>
               <option name="connection">
                 <ConnectionSetting>
-                  <option name="appId" value="PLACEHOLDER" />
-                  <option name="mobileSdkAppId" value="" />
-                  <option name="projectId" value="" />
-                  <option name="projectNumber" value="" />
+                  <option name="appId" value="edu.udb.technostore_market" />
+                  <option name="mobileSdkAppId" value="1:736228670205:android:ae522e376f4061624bdc94" />
+                  <option name="projectId" value="technostoremarket-3ec5e" />
+                  <option name="projectNumber" value="736228670205" />
                 </ConnectionSetting>
               </option>
               <option name="signal" value="SIGNAL_UNSPECIFIED" />

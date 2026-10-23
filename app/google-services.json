@@ -12,7 +12,12 @@
           "package_name": "edu.udb.technostore_market"
         }
       },
-      "oauth_client": [],
+      "oauth_client": [
+        {
+          "client_id": "736228670205-qqk8rt3ki2sg4t89qmdhpphutnlie0gg.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
       "api_key": [
         {
           "current_key": "AIzaSyCr9C-7_zMz2so-Jo8SnFSnMmt4n-mzarA"
@@ -20,7 +25,12 @@
       ],
       "services": {
         "appinvite_service": {
-          "other_platform_oauth_client": []
+          "other_platform_oauth_client": [
+            {
+              "client_id": "736228670205-qqk8rt3ki2sg4t89qmdhpphutnlie0gg.apps.googleusercontent.com",
+              "client_type": 3
+            }
+          ]
         }
       }
     }
