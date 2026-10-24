@@ -16,13 +16,28 @@ android {
         versionCode = 1
         versionName = "1.0"
 
-        testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"    }
+        testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
+    }
+
+    // 1. AQUI ESTÁ EL CAMBIO: Le decimos a Android Studio cómo leer tu llave maestra
+    signingConfigs {
+        getByName("debug") {
+            storeFile = file("debug.keystore")
+            storePassword = "android"
+            keyAlias = "androiddebugkey"
+            keyPassword = "android"
+        }
+    }
 
     buildTypes {
         release {
             optimization {
                 enable = false
             }
+        }
+        // 2. AQUI ESTÁ EL CAMBIO: Forzamos a que el modo "debug" de todos use esa llave
+        debug {
+            signingConfig = signingConfigs.getByName("debug")
         }
     }
     compileOptions {
