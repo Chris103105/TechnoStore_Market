@@ -1,8 +1,8 @@
 plugins {
     alias(libs.plugins.android.application)
     alias(libs.plugins.kotlin.compose)
-    // Add the Google services Gradle plugin
-    id("com.google.gms.google-services")
+    // Google services Gradle plugin (Firebase)
+    alias(libs.plugins.google.services)
 }
 
 android {
@@ -50,14 +50,39 @@ android {
 }
 
 dependencies {
+    // Compose + Material Design 3
     implementation(platform(libs.androidx.compose.bom))
     implementation(libs.androidx.activity.compose)
     implementation(libs.androidx.compose.material3)
+    implementation(libs.androidx.compose.material.icons.extended)
     implementation(libs.androidx.compose.ui)
     implementation(libs.androidx.compose.ui.graphics)
     implementation(libs.androidx.compose.ui.tooling.preview)
     implementation(libs.androidx.core.ktx)
+
+    // Navigation Compose (NavHost, NavController, argumentos)
+    implementation(libs.androidx.navigation.compose)
+
+    // MVVM: ViewModel + StateFlow lifecycle-aware
     implementation(libs.androidx.lifecycle.runtime.ktx)
+    implementation(libs.androidx.lifecycle.runtime.compose)
+    implementation(libs.androidx.lifecycle.viewmodel.compose)
+
+    // Corrutinas
+    implementation(libs.kotlinx.coroutines.android)
+    implementation(libs.kotlinx.coroutines.play.services)
+
+    // Imágenes desde Internet
+    implementation(libs.coil.compose)
+
+    // Firebase (única fuente de datos): Authentication + Cloud Firestore
+    implementation(platform(libs.firebase.bom))
+    implementation(libs.firebase.auth)
+    implementation(libs.firebase.firestore)
+    // Google Sign-In
+    implementation(libs.play.services.auth)
+
+    // Pruebas
     testImplementation(libs.junit)
     androidTestImplementation(platform(libs.androidx.compose.bom))
     androidTestImplementation(libs.androidx.compose.ui.test.junit4)
@@ -65,20 +90,4 @@ dependencies {
     androidTestImplementation(libs.androidx.junit)
     debugImplementation(libs.androidx.compose.ui.test.manifest)
     debugImplementation(libs.androidx.compose.ui.tooling)
-
-    // Navegación entre pantallas en Jetpack Compose
-    implementation("androidx.navigation:navigation-compose:2.7.7")
-
-    // ViewModel y flujos de estado (Arquitectura MVVM)
-    implementation("androidx.lifecycle:lifecycle-viewmodel-compose:2.7.0")
-    implementation("androidx.lifecycle:lifecycle-runtime-compose:2.7.0")
-
-    // Cargar imágenes de productos desde Internet
-    implementation("io.coil-kt:coil-compose:2.6.0")
-
-    // Firebase (Importando el BoM para controlar las versiones automáticamente)
-    implementation(platform("com.google.firebase:firebase-bom:32.8.0"))
-    implementation("com.google.firebase:firebase-auth")
-    implementation("com.google.firebase:firebase-firestore")
-    implementation("com.google.android.gms:play-services-auth:21.0.0")
 }

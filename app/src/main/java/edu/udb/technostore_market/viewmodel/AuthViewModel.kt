@@ -1,156 +1,121 @@
 package edu.udb.technostore_market.viewmodel
 
 import androidx.lifecycle.ViewModel
-import com.google.firebase.auth.FirebaseAuth
-import com.google.firebase.auth.UserProfileChangeRequest
+import androidx.lifecycle.viewModelScope
+import edu.udb.technostore_market.data.repository.AuthRepository
+import edu.udb.technostore_market.util.Validadores
+import edu.udb.technostore_market.util.toUserMessage
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
-import com.google.firebase.auth.GoogleAuthProvider
+import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.update
+import kotlinx.coroutines.launch
 
+/** Estado inmutable de la pantalla de login / registro. */
+data class AuthUiState(
+    val cargando: Boolean = false,
+    val autenticado: Boolean = false,
+    val nombreError: String? = null,
+    val emailError: String? = null,
+    val passwordError: String? = null,
+    val confirmacionError: String? = null,
+    /** Mensaje general (error o información) que la UI muestra en un Snackbar. */
+    val mensaje: String? = null
+)
 
-// Estados de la pantalla
+class AuthViewModel(private val repositorio: AuthRepository) : ViewModel() {
 
-// Una 'sealed class' es como un menú cerrado de opciones.
-// Le dice a la UI: "Solo puedes estar en uno de estos 4 estados, nada más".
-// Esto evita errores donde la pantalla está cargando y mostrando un error a la vez.
-sealed class AuthState {
-    object Idle : AuthState()                       // Reposo: No pasa nada.
-    object Loading : AuthState()                    // Cargando: Muestra la ruedita.
-    object Success : AuthState()                    // Éxito
-    data class Error(val message: String) : AuthState() // Error: Muestra un mensaje en texto.
-}
+    private val _uiState = MutableStateFlow(AuthUiState())
+    val uiState: StateFlow<AuthUiState> = _uiState.asStateFlow()
 
-class AuthViewModel : ViewModel() {
+    fun haySesionActiva(): Boolean = repositorio.haySesionActiva()
 
-    // Instancia principal para hablar con los servidores de Firebase
-    private val auth = FirebaseAuth.getInstance()
-
-
-    // Comunicación con la UI
-
-    // _authState Privada: El ViewModel la usa para modificar el estado internamente.
-    // authState Pública: La Pantalla (LoginScreen) la recibe (collectAsState), pero no puede modificarla.
-
-    private val _authState = MutableStateFlow<AuthState>(AuthState.Idle)
-    val authState: StateFlow<AuthState> = _authState
-
-
-
-    // Funciones de Correo y Contraseña
-
-
-    //  Iniciar Sesión
-    fun login(correo: String, pass: String) {
-        // Validación rápida local
-        if (correo.isBlank() || pass.isBlank()) {
-            _authState.value = AuthState.Error("Ingresa tu correo y contraseña")
+    fun iniciarSesion(correo: String, password: String) {
+        val emailError = Validadores.validarEmail(correo)
+        val passwordError = Validadores.validarPasswordObligatoria(password)
+        if (emailError != null || passwordError != null) {
+            _uiState.update { it.copy(emailError = emailError, passwordError = passwordError) }
             return
         }
-
-        //  Avisamos a la UI que muestre la ruedita de carga
-        _authState.value = AuthState.Loading
-
-        // Petición a Firebase
-        auth.signInWithEmailAndPassword(correo, pass)
-            .addOnCompleteListener { task ->
-                if (task.isSuccessful) {
-                    _authState.value = AuthState.Success
-                } else {
-                    // Si falla, extraemos el mensaje de error de Firebase o ponemos uno genérico
-                    _authState.value = AuthState.Error(task.exception?.localizedMessage ?: "Error al iniciar sesión")
-                }
-            }
+        ejecutarAutenticacion { repositorio.iniciarSesion(correo, password) }
     }
 
-    //Crear Cuenta Nueva
-    fun registrar(nombre: String, correo: String, pass: String, confirmPass: String) {
-        //  Validaciones locales
-        if (nombre.isBlank() || correo.isBlank() || pass.isBlank()) {
-            _authState.value = AuthState.Error("Completa todos los campos")
-            return
-        }
-        if (pass != confirmPass) {
-            _authState.value = AuthState.Error("Las contraseñas no coinciden")
-            return
-        }
-
-        _authState.value = AuthState.Loading
-
-        //  Petición a Firebase para crear la cuenta
-        auth.createUserWithEmailAndPassword(correo, pass)
-            .addOnCompleteListener { task ->
-                if (task.isSuccessful) {
-                    // Firebase crea la cuenta solo con correo y contraseña.
-                    // Para guardar el "Nombre", debemos actualizar el perfil del usuario recién creado.
-                    val user = auth.currentUser
-                    val profileUpdates = UserProfileChangeRequest.Builder()
-                        .setDisplayName(nombre)
-                        .build()
-                    user?.updateProfile(profileUpdates)
-
-                    _authState.value = AuthState.Success
-                } else {
-                    _authState.value = AuthState.Error(task.exception?.localizedMessage ?: "Error al registrar")
-                }
+    fun registrar(nombre: String, correo: String, password: String, confirmacion: String) {
+        val nombreError = Validadores.validarNombre(nombre)
+        val emailError = Validadores.validarEmail(correo)
+        val passwordError = Validadores.validarPassword(password)
+        val confirmacionError = Validadores.validarConfirmacion(password, confirmacion)
+        if (listOf(nombreError, emailError, passwordError, confirmacionError).any { it != null }) {
+            _uiState.update {
+                it.copy(
+                    nombreError = nombreError,
+                    emailError = emailError,
+                    passwordError = passwordError,
+                    confirmacionError = confirmacionError
+                )
             }
+            return
+        }
+        ejecutarAutenticacion { repositorio.registrar(nombre, correo, password) }
     }
 
-    //  Recuperar Contraseña
+    fun iniciarSesionConGoogle(idToken: String) {
+        ejecutarAutenticacion { repositorio.iniciarSesionConGoogle(idToken) }
+    }
+
     fun recuperarPassword(correo: String) {
-        if (correo.isBlank()) {
-            _authState.value = AuthState.Error("Ingresa tu correo para recuperar la contraseña")
+        val emailError = Validadores.validarEmail(correo)
+        if (emailError != null) {
+            _uiState.update { it.copy(emailError = emailError) }
             return
         }
+        viewModelScope.launch {
+            _uiState.update { it.copy(cargando = true, mensaje = null) }
+            repositorio.recuperarPassword(correo).fold(
+                onSuccess = {
+                    _uiState.update {
+                        it.copy(cargando = false, mensaje = "Te enviamos un correo para restablecer tu contraseña")
+                    }
+                },
+                onFailure = { e -> _uiState.update { it.copy(cargando = false, mensaje = e.toUserMessage()) } }
+            )
+        }
+    }
 
-        _authState.value = AuthState.Loading
-        auth.sendPasswordResetEmail(correo)
-            .addOnCompleteListener { task ->
-                if (task.isSuccessful) {
-                    //  Aquí usamos el estado 'Error' temporalmente
-                    // para mostrar el mensaje rojo en pantalla sin tener que crear un estado nuevo
-                    // de "Notificación".
-                    _authState.value = AuthState.Error("Correo de recuperación enviado")
-                } else {
-                    _authState.value = AuthState.Error(task.exception?.localizedMessage ?: "Error al enviar correo")
-                }
+    fun mostrarError(mensaje: String) {
+        _uiState.update { it.copy(cargando = false, mensaje = mensaje) }
+    }
+
+    fun cerrarSesion() {
+        repositorio.cerrarSesion()
+        _uiState.value = AuthUiState()
+    }
+
+    /** Limpia errores al cambiar entre las vistas de login y registro. */
+    fun reiniciarEstado() {
+        _uiState.value = AuthUiState()
+    }
+
+    fun consumirMensaje() {
+        _uiState.update { it.copy(mensaje = null) }
+    }
+
+    private fun ejecutarAutenticacion(accion: suspend () -> Result<Unit>) {
+        viewModelScope.launch {
+            _uiState.update {
+                it.copy(
+                    cargando = true,
+                    mensaje = null,
+                    nombreError = null,
+                    emailError = null,
+                    passwordError = null,
+                    confirmacionError = null
+                )
             }
-    }
-
-
-
-    //  Iniciar sesion con Google
-
-
-    // Firebase valida el Id que la UI extrajo.
-    fun loginConGoogle(idToken: String) {
-        _authState.value = AuthState.Loading
-
-        //  Empaquetamos el token de Google en una credencial que Firebase entienda
-        val credential = GoogleAuthProvider.getCredential(idToken, null)
-
-        //  Le damos la credencial a Firebase. Si el sello coincide , nos deja pasar.
-        auth.signInWithCredential(credential)
-            .addOnCompleteListener { task ->
-                if (task.isSuccessful) {
-                    _authState.value = AuthState.Success
-                } else {
-                    _authState.value = AuthState.Error(task.exception?.localizedMessage ?: "Error con Google")
-                }
-            }
-    }
-
-
-
-    // Funciones de ayuda para manejo de errores
-
-    // Atrapa los errores que suceden en la ventana emergente de Google antes de llegar a Firebase
-    fun setError(mensaje: String) {
-        _authState.value = AuthState.Error(mensaje)
-    }
-
-    // Devuelve la pantalla a su estado normal (borra mensajes de error, por ejemplo,
-    // cuando el usuario cambia entre la vista de Login y Registro)
-    fun resetState() {
-        _authState.value = AuthState.Idle
+            accion().fold(
+                onSuccess = { _uiState.update { it.copy(cargando = false, autenticado = true) } },
+                onFailure = { e -> _uiState.update { it.copy(cargando = false, mensaje = e.toUserMessage()) } }
+            )
+        }
     }
 }
