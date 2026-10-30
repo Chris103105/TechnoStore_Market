@@ -164,15 +164,15 @@ Las versiones están centralizadas en `gradle/libs.versions.toml`.
 
 | Login | Catálogo | Detalle |
 |---|---|---|
-| ![Login](docs/capturas/01_login.png) | ![Catálogo](docs/capturas/02_catalogo.png) | ![Detalle](docs/capturas/03_detalle.png) |
+| ![Login](docs/capturas/01_login.jpeg) | ![Catálogo](docs/capturas/02_catalogo.jpeg) | ![Detalle](docs/capturas/03_detalle.jpeg) |
 
 | Carrito | Confirmar pedido | Historial |
 |---|---|---|
-| ![Carrito](docs/capturas/04_carrito.png) | ![Pedido](docs/capturas/05_dialogo_pedido.png) | ![Historial](docs/capturas/06_historial.png) |
+| ![Carrito](docs/capturas/04_carrito.jpeg) | ![Pedido](docs/capturas/05_dialogo_pedido.jpeg) | ![Historial](docs/capturas/06_historial.jpeg) |
 
 | Detalle de pedido | Perfil |
 |---|---|
-| ![Detalle pedido](docs/capturas/07_detalle_pedido.png) | ![Perfil](docs/capturas/08_perfil.png) |
+| ![Detalle pedido](docs/capturas/07_detalle_pedido.jpeg) | ![Perfil](docs/capturas/08_perfil.jpeg) |
 
 ## 🧪 Calidad de código
 
