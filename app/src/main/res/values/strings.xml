@@ -1,5 +1,5 @@
 <resources>
-    <string name="app_name">TechnoStore_Market</string>
+    <string name="app_name">TechnoStore Market</string>
 
     <!--
         usamos el ID "Web" Se lo pasamos a GoogleSignInOptions para solicitar un `idToken`.
